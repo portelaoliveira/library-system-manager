@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 class Book(BaseModel):
+    id: Optional[str] = None  # Campo id opcional
     title: str = Field(..., example="O Alquimista")
     author: str = Field(..., example="Paulo Coelho")
     published_year: int = Field(..., example=1988)

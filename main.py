@@ -20,10 +20,10 @@ def book_serializer(book) -> dict:
 
 @app.post("/books/", response_model=Book)
 def create_book(book: Book):
-    result = collection.insert_one(book.model_dump())
-    if result.inserted_id:
-        return book
-    raise HTTPException(status_code=500, detail="Erro ao criar o livro.")
+    result = collection.insert_one(book.model_dump())  # Inserir no MongoDB
+    created_book = collection.find_one({"_id": result.inserted_id})  # Buscar o livro recém-criado
+    return book_serializer(created_book)  # Retornar o livro com o ID incluído
+
 
 
 @app.get("/books/", response_model=List[Book])
