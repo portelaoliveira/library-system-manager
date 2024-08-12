@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from models import Book, UpdateBook
 from database import collection
 from bson import ObjectId
-from typing import List
+from typing import List, Optional
 from pymongo import ASCENDING, DESCENDING
 
 app = FastAPI()
@@ -33,9 +33,38 @@ def get_books(limit: int = 10, skip: int = 0, sort_by: str = "title", order: str
     return [book_serializer(book) for book in books]
 
 @app.get("/books/search/", response_model=List[Book])
-def search_books(query: str):
-    books = collection.find({"title": {"$regex": query, "$options": "i"}})
-    return [book_serializer(book) for book in books]
+def search_books(
+    title: Optional[str] = None,
+    author: Optional[str] = None,
+    published_year: Optional[int] = None,
+    genre: Optional[str] = None,
+    description: Optional[str] = None
+):
+    # Construindo a query dinâmica
+    search_criteria = {}
+    
+    if title:
+        search_criteria["title"] = {"$regex": title, "$options": "i"}
+    if author:
+        search_criteria["author"] = {"$regex": author, "$options": "i"}
+    if published_year:
+        search_criteria["published_year"] = published_year
+    if genre:
+        search_criteria["genre"] = {"$regex": genre, "$options": "i"}
+    if description:
+        search_criteria["description"] = {"$regex": description, "$options": "i"}
+
+    # Executando a consulta no MongoDB
+    books = collection.find(search_criteria)
+
+    # Serializando os resultados
+    result = [book_serializer(book) for book in books]
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Nenhum livro encontrado.")
+
+    return result
+
 
 @app.get("/books/{book_id}", response_model=Book)
 def get_book(book_id: str):
